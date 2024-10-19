@@ -9,13 +9,20 @@ Parameters:
       - "us-east-1"
       - "us-west-1"
       - "eu-west-1"
-      - "eu-central-1"
     Description: "Select the AWS region where the stack will be deployed"
 
-  Ec2InstanceConnectPrefixList:
-    Type: String
-    Default: "pl-0e4bcff02b13bef1e"
+  # Ec2InstanceConnectPrefixList:
+  #   Type: String
+  #   Default: "pl-0e4bcff02b13bef1e"
 
+Mappings:
+  RegionToPrefixList:
+    us-east-1:
+      PrefixList: "pl-0e4bcff02b13bef1e"
+    us-west-1:
+      PrefixList: "pl-0e99958a47b22d6ab"
+    eu-west-1:
+      PrefixList: "pl-0839cc4c195a4e751"
 
 Resources:
   MyEC2Instance:
@@ -34,11 +41,11 @@ Resources:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          SourcePrefixListId: !Ref Ec2InstanceConnectPrefixList
+          SourcePrefixListId: !FindInMap [RegionToPrefixList, !Ref SelectedRegion, PrefixList]
 Outputs:
   InstancePublicIP:
     Description: "The public IP address of the EC2 instance"
-    Value: !GetAtt MyEC2Instance.PublicIp
+    Value: !Ref SshSecurityGroup
 
   SelectedRegionOutput:
     Description: "The AWS region where the stack is deployed"
