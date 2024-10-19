@@ -1,32 +1,36 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: Create an EC2 instance with a security group that allows SSH access and a new key pair
+
+Parameters:
+
+  Ec2InstanceConnectPrefixList:
+    Type: String
+    Default: "pl-0e4bcff02b13bef1e"
+
 
 Resources:
   MyEC2Instance:
-    Type: 'AWS::EC2::Instance'
-    Properties: 
+    Type: "AWS::EC2::Instance"
+    Properties:
       InstanceType: t2.micro
       ImageId: ami-0fff1b9a61dec8a5f
-      KeyName: !Ref SshKeyPair
       SecurityGroups:
         - !Ref SshSecurityGroup
 
   SshSecurityGroup:
-    Type: 'AWS::EC2::SecurityGroup'
+    Type: "AWS::EC2::SecurityGroup"
     Properties:
-      GroupDescription: Enable SSH access
+      GroupDescription: "Allow SSH access only via AWS EC2 Instance Connect From the Same AZ"
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: '22'
-          ToPort: '22'
-          CidrIp: 0.0.0.0/0
-
-  SshKeyPair:
-    Type: 'AWS::EC2::KeyPair'
-    Properties:
-      KeyName: key-pair-lab1 
-
+          FromPort: 22
+          ToPort: 22
+          SourcePrefixListId: !Ref Ec2InstanceConnectPrefixList
 Outputs:
-  KeyPairName:
-    Description: The name of the key pair
-    Value: !Ref SshKeyPair
+  InstancePublicIP:
+    Description: "The public IP address of the EC2 instance"
+    Value: !GetAtt MyEC2Instance.PublicIp
+
+  SelectedRegionOutput:
+    Description: "The AWS region where the stack is deployed"
+    Value: !Ref SelectedRegion
