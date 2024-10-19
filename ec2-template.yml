@@ -2,6 +2,15 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: Create an EC2 instance with a security group that allows SSH access and a new key pair
 
 Parameters:
+  SelectedRegion:
+    Type: String
+    Default: "us-east-1"
+    AllowedValues:
+      - "us-east-1"
+      - "us-west-1"
+      - "eu-west-1"
+      - "eu-central-1"
+    Description: "Select the AWS region where the stack will be deployed"
 
   Ec2InstanceConnectPrefixList:
     Type: String
