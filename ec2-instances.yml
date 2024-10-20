@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Template to launch EC2 instances in specific subnets within a VPC
+
+Parameters:
+  # import the VPC ID, Public Subnet ID and Private Subnet ID from the VPC stack
+  VpcId:
+    Type: String
+    Description: The VPC ID where the EC2 instances will be launched
+    Default: !ImportValue VpcId
+  PublicSubnetId:
+    Type: String
+    Description: The Public Subnet ID where the EC2 instance will be launched
+    Default: !ImportValue PublicSubnetId
+  PrivateSubnetId:
+    Type: String
+    Description: The Private Subnet ID where the EC2 instance will be launched
+    Default: !ImportValue PrivateSubnetId
+
+Resources:
+# create public EC2 instance with in the public subnet and with public security group
+  PublicEC2Instance:
+    Type: 'AWS::EC2::Instance'
+    Properties: 
+      InstanceType: t2.micro
+      ImageId: ami-0fff1b9a61dec8a5f
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          SubnetId: 
+            Ref: PublicSubnetId
+          GroupSet:
+            - !ImportValue PublicSecurityGroupId
+
+  # create private EC2 instance with in the private subnet and with private and jumpbox security groups
+  PrivateEC2Instance:
+    Type: 'AWS::EC2::Instance'
+    Properties: 
+      InstanceType: t2.micro
+      ImageId: ami-0fff1b9a61dec8a5f
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: false
+          SubnetId: 
+            Ref: PrivateSubnetId
+          GroupSet:
+            - !ImportValue PrivateSecurityGroupId
+            - !ImportValue SshJumpboxSecurityGroupId
+
+
