@@ -13,7 +13,7 @@ Mappings:
 
 Resources:
   # create VPC
-  VpcIacCa1:
+  VpcCa1:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: 10.0.0.0/22
@@ -21,13 +21,13 @@ Resources:
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: VpcIacCa1
+          Value: VpcCa1
 
   # create public subnet
   PublicSubnteCa1:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref VpcIacCa1
+      VpcId: !Ref VpcCa1
       CidrBlock: 10.0.1.0/24
       MapPublicIpOnLaunch: true
       Tags:
@@ -38,7 +38,7 @@ Resources:
   PrivateSubnteCa1:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref VpcIacCa1
+      VpcId: !Ref VpcCa1
       CidrBlock: 10.0.2.0/24
       MapPublicIpOnLaunch: false
       Tags:
@@ -57,14 +57,14 @@ Resources:
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
-      VpcId: !Ref VpcIacCa1
+      VpcId: !Ref VpcCa1
       InternetGatewayId: !Ref InternatGatewayCa1
 
   # create route table
   MyRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref VpcIacCa1
+      VpcId: !Ref VpcCa1
       Tags:
         - Key: Name
           Value: MyRouteTable
@@ -88,7 +88,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Allow SSH and HTTP access
-      VpcId: !Ref VpcIacCa1
+      VpcId: !Ref VpcCa1
       SecurityGroupIngress:
         # allow http traffic from the internet 
         - IpProtocol: tcp
@@ -106,9 +106,9 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Allow SSH access
-      VpcId: !Ref VpcIacCa1
+      VpcId: !Ref VpcCa1
       SecurityGroupIngress:
-        # allow ssh traffic from the public network only 
+        # allow http traffic from the public network only 
         - IpProtocol: tcp
           FromPort: '80'
           ToPort: '80'
@@ -118,12 +118,17 @@ Resources:
           FromPort: '443'
           ToPort: '443'
           SourceSecurityGroupId: !Ref PublicSecurityGroup
+        # allow ssh traffic from the ssh security group
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !Ref SshJumpboxSecurityGroup
 
   # jumbox security group
-  SshSecurityGroup:
+  SshJumpboxSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      VpcId: !Ref VpcIacCa1
+      VpcId: !Ref VpcCa1
       GroupDescription: Allow SSH access only via AWS EC2 Instance Connect From the Same Region
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -135,6 +140,30 @@ Resources:
             - PrefixList
 
 Outputs:
-  SshSecurityGroupId:
+  SshJumpboxSecurityGroupId:
     Description: The jumpbox security group ID
-    Value: !Ref SshSecurityGroup
+    Value: !Ref SshJumpboxSecurityGroup
+
+  VpcId:
+    Description: The VPC ID
+    Value: !Ref VpcCa1
+
+  PublicSubnetId:
+    Description: The public subnet ID
+    Value: !Ref PublicSubnteCa1
+
+  PrivateSubnetId:
+    Description: The private subnet ID
+    Value: !Ref PrivateSubnteCa1
+
+  PublicSecurityGroupId:
+    Description: The public security group ID
+    Value: !Ref PublicSecurityGroup
+
+  PrivateSecurityGroupId:
+    Description: The private security group ID
+    Value: !Ref PrivateSecurityGroup
+
+  CurrentRegion:
+    Description: The AWS region where the stack is deployed
+    Value: !Ref AWS::Region
