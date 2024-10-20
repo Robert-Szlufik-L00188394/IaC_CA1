@@ -1,6 +1,16 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: AWS CloudFormation to Create a VPC, subnets and routing- IaC CA 1
 
+Mappings:
+  # map the region to the prefix list (for jumpbox security group)
+  RegionToPrefixList:
+    us-east-1:
+      PrefixList: pl-0e4bcff02b13bef1e
+    us-west-1:
+      PrefixList: pl-0e99958a47b22d6ab
+    eu-west-1:
+      PrefixList: pl-0839cc4c195a4e751
+
 Resources:
   # create VPC
   VpcIacCa1:
@@ -108,3 +118,23 @@ Resources:
           FromPort: '443'
           ToPort: '443'
           SourceSecurityGroupId: !Ref PublicSecurityGroup
+
+  # jumbox security group
+  SshSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VpcIacCa1
+      GroupDescription: Allow SSH access only via AWS EC2 Instance Connect From the Same Region
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourcePrefixListId: !FindInMap
+            - RegionToPrefixList
+            - !Ref AWS::Region
+            - PrefixList
+
+Outputs:
+  SshSecurityGroupId:
+    Description: The jumpbox security group ID
+    Value: !Ref SshSecurityGroup
