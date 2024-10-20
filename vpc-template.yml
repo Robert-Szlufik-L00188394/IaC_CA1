@@ -1,0 +1,110 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation to Create a VPC, subnets and routing- IaC CA 1
+
+Resources:
+  # create VPC
+  VpcIacCa1:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/22
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: VpcIacCa1
+
+  # create public subnet
+  PublicSubnteCa1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcIacCa1
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: PublicSubnteCa1
+
+  # create private subnet
+  PrivateSubnteCa1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcIacCa1
+      CidrBlock: 10.0.2.0/24
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: PrivateSubnteCa1
+
+  # create internet gateway
+  InternatGatewayCa1:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: InternatGatewayCa1
+
+  # attach gateway to VPC
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VpcIacCa1
+      InternetGatewayId: !Ref InternatGatewayCa1
+
+  # create route table
+  MyRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcIacCa1
+      Tags:
+        - Key: Name
+          Value: MyRouteTable
+  # create route frin route table to internet gateway
+  MyRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref MyRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternatGatewayCa1
+
+  # connect public subnet to route table
+  SubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnteCa1
+      RouteTableId: !Ref MyRouteTable
+
+  # public security group
+  PublicSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH and HTTP access
+      VpcId: !Ref VpcIacCa1
+      SecurityGroupIngress:
+        # allow http traffic from the internet 
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0
+          # allow https traffic from the internet
+        - IpProtocol: tcp
+          FromPort: '443'
+          ToPort: '443'
+          CidrIp: 0.0.0.0/0
+
+  # private security group
+  PrivateSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH access
+      VpcId: !Ref VpcIacCa1
+      SecurityGroupIngress:
+        # allow ssh traffic from the public network only 
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          SourceSecurityGroupId: !Ref PublicSecurityGroup
+        # allow https traffic from the public network only
+        - IpProtocol: tcp
+          FromPort: '443'
+          ToPort: '443'
+          SourceSecurityGroupId: !Ref PublicSecurityGroup
