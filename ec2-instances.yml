@@ -1,76 +1,55 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: Template to launch EC2 instances in specific subnets within a VPC
 
 Parameters:
   # allow the user to specify the AMI ID for the public EC2 instance
   PublicImageId:
-      Type: String
-      Description: The Image ID to use for the public EC2 instance
-      AllowedValues:
-        - ami-0fff1b9a61dec8a5f
-      Default: 0fff1b9a61dec8a5f
+    Type: String
+    Description: "The Image ID to use for the public EC2 instance"
+    AllowedValues:
+      - ami-00385a401487aefa4 # Add more AMI IDs if needed
+    Default: ami-00385a401487aefa4
 
   # allow the user to specify the AMI ID for the private EC2 instance
   PrivateImageId:
     Type: String
-    Description: The Image ID to use for the private EC2 instance
+    Description: "The Image ID to use for the private EC2 instance"
     AllowedValues:
-        - ami-0fff1b9a61dec8a5f
-    Default: 0fff1b9a61dec8a5f
-
-  # import the VPC ID, Public Subnet ID and Private Subnet ID from the VPC stack
-  VpcId:
-    Type: String
-    Description: The VPC ID where the EC2 instances will be launched
-    Default: !ImportValue VpcId
-  PublicSubnetId:
-    Type: String
-    Description: The Public Subnet ID where the EC2 instance will be launched
-    Default: !ImportValue PublicSubnetId
-  PrivateSubnetId:
-    Type: String
-    Description: The Private Subnet ID where the EC2 instance will be launched
-    Default: !ImportValue PrivateSubnetId
+      - ami-00385a401487aefa4 # Add more AMI IDs if needed
+    Default: ami-00385a401487aefa4
 
 Resources:
-# create public EC2 instance with in the public subnet and with public security group
+  # create public EC2 instance in the public subnet and with public security group
   PublicEC2Instance:
-    Type: 'AWS::EC2::Instance'
-    Properties: 
+    Type: "AWS::EC2::Instance"
+    Properties:
       InstanceType: t2.micro
       ImageId: !Ref PublicImageId
       NetworkInterfaces:
         - AssociatePublicIpAddress: true
-          SubnetId: 
-            Ref: PublicSubnetId
+          DeviceIndex: 0
+          SubnetId: !ImportValue PublicSubnetId
           GroupSet:
             - !ImportValue PublicSecurityGroupId
 
-  # create private EC2 instance with in the private subnet and with private and jumpbox security groups
+  # create private EC2 instance in the private subnet and with private and jumpbox security groups
   PrivateEC2Instance:
-    Type: 'AWS::EC2::Instance'
-    Properties: 
+    Type: "AWS::EC2::Instance"
+    Properties:
       InstanceType: t2.micro
       ImageId: !Ref PrivateImageId
       NetworkInterfaces:
         - AssociatePublicIpAddress: false
-          SubnetId: 
-            Ref: PrivateSubnetId
+          DeviceIndex: 0
+          SubnetId: !ImportValue PrivateSubnetId
           GroupSet:
-            - !ImportValue PrivateSecurityGroupId
             - !ImportValue SshJumpboxSecurityGroupId
 
 Outputs:
   PublicInstanceId:
-    Description: The Instance ID of the newly created public EC2 instance
-    Value: 
-      Ref: PublicEC2Instance
+    Description: "The Instance ID of the newly created public EC2 instance"
+    Value: !Ref PublicEC2Instance
 
   PrivateInstanceId:
-    Description: The Instance ID of the newly created private EC2 instance
-    Value: 
-      Ref: PrivateEC2Instance
-      ArmInstanceId:
-        Description: The Instance ID of the newly created ARM EC2 instance
-        Value: 
-          Ref: ArmEC2Instance
+    Description: "The Instance ID of the newly created private EC2 instance"
+    Value: !Ref PrivateEC2Instance

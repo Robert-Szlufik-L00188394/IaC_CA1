@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: AWS CloudFormation to Create a VPC, subnets and routing- IaC CA 1
 
 Mappings:
@@ -90,15 +90,15 @@ Resources:
       GroupDescription: Allow SSH and HTTP access
       VpcId: !Ref VpcCa1
       SecurityGroupIngress:
-        # allow http traffic from the internet 
+        # allow http traffic from the internet
         - IpProtocol: tcp
-          FromPort: '80'
-          ToPort: '80'
+          FromPort: "80"
+          ToPort: "80"
           CidrIp: 0.0.0.0/0
           # allow https traffic from the internet
         - IpProtocol: tcp
-          FromPort: '443'
-          ToPort: '443'
+          FromPort: "443"
+          ToPort: "443"
           CidrIp: 0.0.0.0/0
 
   # private security group
@@ -108,15 +108,15 @@ Resources:
       GroupDescription: Allow SSH access
       VpcId: !Ref VpcCa1
       SecurityGroupIngress:
-        # allow http traffic from the public network only 
+        # allow http traffic from the public network only
         - IpProtocol: tcp
-          FromPort: '80'
-          ToPort: '80'
+          FromPort: "80"
+          ToPort: "80"
           SourceSecurityGroupId: !Ref PublicSecurityGroup
         # allow https traffic from the public network only
         - IpProtocol: tcp
-          FromPort: '443'
-          ToPort: '443'
+          FromPort: "443"
+          ToPort: "443"
           SourceSecurityGroupId: !Ref PublicSecurityGroup
         # allow ssh traffic from the ssh security group
         - IpProtocol: tcp
@@ -140,30 +140,44 @@ Resources:
             - PrefixList
 
 Outputs:
-  SshJumpboxSecurityGroupId:
-    Description: The jumpbox security group ID
-    Value: !Ref SshJumpboxSecurityGroup
-
   VpcId:
     Description: The VPC ID
     Value: !Ref VpcCa1
+    Export:
+      Name: VpcId
 
   PublicSubnetId:
     Description: The public subnet ID
     Value: !Ref PublicSubnteCa1
+    Export:
+      Name: PublicSubnetId
 
   PrivateSubnetId:
     Description: The private subnet ID
     Value: !Ref PrivateSubnteCa1
+    Export:
+      Name: PrivateSubnetId
 
   PublicSecurityGroupId:
     Description: The public security group ID
     Value: !Ref PublicSecurityGroup
+    Export:
+      Name: PublicSecurityGroupId
 
   PrivateSecurityGroupId:
     Description: The private security group ID
     Value: !Ref PrivateSecurityGroup
+    Export:
+      Name: PrivateSecurityGroupId
+
+  SshJumpboxSecurityGroupId:
+    Description: The jumpbox security group ID
+    Value: !Ref SshJumpboxSecurityGroup
+    Export:
+      Name: SshJumpboxSecurityGroupId
 
   CurrentRegion:
     Description: The AWS region where the stack is deployed
     Value: !Ref AWS::Region
+    Export:
+      Name: CurrentRegion

@@ -1,33 +1,15 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Create an EC2 instance with a security group that allows SSH access and a new key pair
 
-Parameters:
-  #imports
-  VPCId:
-    Type: String
-    Description: "VPC ID where the instance will be launched"
-    Default: !ImportValue VPCId  
-  
-  SShJumpboxSecurityGroupId:
-    Type: String
-    Description: "Security Group ID for the SSH Jumpbox"
-    Default: !ImportValue SShJumpboxSecurityGroupId  
-
-  PublicSubnetId: 
-    Type: String
-    Description: "Public Subnet ID where the instance will be launched"
-    Default: !ImportValue PublicSubnetId  
-
-
 Resources:
 
   MyEC2Instance:
     Type: "AWS::EC2::Instance"
     Properties:
       InstanceType: t2.micro
-      SubnetId: !Ref PublicSubnetId
-      ImageId: ami-0fff1b9a61dec8a5f
+      SubnetId: !ImportValue PublicSubnetId
+      ImageId: ami-00385a401487aefa4
       SecurityGroupIds:
-        - !Ref SShJumpboxSecurityGroupId
+        - !ImportValue  SshJumpboxSecurityGroupId
 
 
