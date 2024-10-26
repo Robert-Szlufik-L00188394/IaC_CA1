@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Template to launch EC2 instances in specific subnets within a VPC
+
+Parameters:
+  # allow the user to specify the os and type of instance for the public and private EC2 instances
+
+  PublicOperatingSystem:
+    Type: String
+    Description: "The Operating System to use for the public EC2 instances"
+    AllowedValues:
+      - Linux
+      - RedHat
+      - Windows
+    Default: Linux
+
+  PrivateOperatingSystem:
+    Type: String
+    Description: "The Operating System to use for the public EC2 instances"
+    AllowedValues:
+      - Linux
+      - RedHat
+      - Windows
+    Default: Linux
+
+  PublicInstanceType:
+    Type: String
+    Description: "The Instance Type to use for the public EC2 instance"
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+    Default: t2.micro
+  
+  PrivateInstanceType:
+    Type: String
+    Description: "The Instance Type to use for the private EC2 instance"
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+    Default: t2.micro
+
+Mappings:
+  RegionImageMap:
+    us-east-1:
+      Linux: ami-06b21ccaeff8cd686
+      RedHat: ami-0583d8c7a9c35822c
+      Windows: ami-0324a83b82023f0b3 
+    eu-west-1:
+      Linux: ami-00385a401487aefa4
+      RedHat: ami-07d4917b6f95f5c2a
+      Windows: ami-0d825a124481985ae
+
+
+Resources:
+  # create public EC2 instance in the public subnet and with public security group
+  PublicEC2Instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      InstanceType: !Ref PublicInstanceType
+      ImageId: !FindInMap [RegionImageMap, !Ref "AWS::Region", !Ref PublicOperatingSystem]
+      NetworkInterfaces:
+        - DeviceIndex: 0
+          SubnetId: !ImportValue PublicSubnetId
+          GroupSet:
+            - !ImportValue PublicSecurityGroupId
+
+  # create private EC2 instance in the private subnet and with private and jumpbox security groups
+  PrivateEC2Instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      InstanceType: !Ref PrivateInstanceType
+      ImageId: !FindInMap [RegionImageMap, !Ref "AWS::Region", !Ref PrivateOperatingSystem]
+      KeyName: KeyPairJumpbox
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: false
+          DeviceIndex: 0
+          SubnetId: !ImportValue PrivateSubnetId
+          GroupSet:
+            - !ImportValue PrivateSecurityGroupId
+
+  EIPAssociation:
+    Type: "AWS::EC2::EIPAssociation"
+    Properties:
+      AllocationId: !ImportValue ElasticIpId
+      InstanceId: !Ref PublicEC2Instance
+
+Outputs:
+  PublicInstanceId:
+    Description: "The Instance ID of the newly created public EC2 instance"
+    Value: !Ref PublicEC2Instance
+
+  PrivateInstanceId:
+    Description: "The Instance ID of the newly created private EC2 instance"
+    Value: !Ref PrivateEC2Instance

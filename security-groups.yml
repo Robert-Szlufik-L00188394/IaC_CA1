@@ -1,0 +1,103 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AWS CloudFormation Template to Create Security Groups - IaC CA 1
+
+
+Mappings:
+  # map the region to the prefix list (for jumpbox security group)
+  RegionToPrefixList:
+    us-east-1:
+      PrefixList: pl-0e4bcff02b13bef1e
+    eu-west-1:
+      PrefixList: pl-0839cc4c195a4e751
+
+Resources:
+  # public security group
+  PublicSecurityGroupCa1:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP, HTTPS and ICMP traffic from the internet
+      VpcId: !ImportValue  VpcId
+      SecurityGroupIngress:
+        # allow http traffic from the internet
+        - IpProtocol: tcp
+          FromPort: "80"
+          ToPort: "80"
+          CidrIp: 0.0.0.0/0
+          # allow https traffic from the internet
+        - IpProtocol: tcp
+          FromPort: "443"
+          ToPort: "443"
+          CidrIp: 0.0.0.0/0
+          # allow icmp traffic from the internet
+        - IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+
+  # private security group
+  PrivateSecurityGroupCa1:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP, HTTPS and ICMP PublicsSecurityGroup and SSH from JumpboxSecurityGroup
+      VpcId: !ImportValue  VpcId
+      SecurityGroupIngress:
+        # allow http traffic from the public network only
+        - IpProtocol: tcp
+          FromPort: "80"
+          ToPort: "80"
+          SourceSecurityGroupId: !Ref PublicSecurityGroupCa1
+        # allow https traffic from the public network only
+        - IpProtocol: tcp
+          FromPort: "443"
+          ToPort: "443"
+          SourceSecurityGroupId: !Ref PublicSecurityGroupCa1
+        # allow ssh traffic from the ssh security group
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !Ref SshJumpboxSecurityGroup
+          # CidrIp: 0.0.0.0/0
+        # allow icmp traffic from the internet
+        - IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+
+  # jumbox security group
+  SshJumpboxSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !ImportValue  VpcId
+      GroupDescription: Allow SSH access only via AWS EC2 Instance Connect From the Same Region
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourcePrefixListId: !FindInMap
+            - RegionToPrefixList
+            - !Ref AWS::Region
+            - PrefixList
+        - IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+
+Outputs:
+
+  SshJumpboxSecurityGroupId:
+    Description: The jumpbox security group ID
+    Value: !Ref SshJumpboxSecurityGroup
+    Export:
+      Name: SshJumpboxSecurityGroupId
+
+  PublicSecurityGroupId:
+    Description: The public security group ID
+    Value: !Ref PublicSecurityGroupCa1
+    Export:
+      Name: PublicSecurityGroupId
+
+  PrivateSecurityGroupId:
+    Description: The private security group ID
+    Value: !Ref PrivateSecurityGroupCa1
+    Export:
+      Name: PrivateSecurityGroupId
