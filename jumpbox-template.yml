@@ -1,0 +1,18 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AWS CloudFormation Template to create a jumpbox instance - IaC CA 1
+
+Resources:
+  JumpboxInstance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      InstanceType: t2.micro
+      KeyName: KeyPairJumpbox
+      SubnetId: !ImportValue PublicSubnetId
+      ImageId: ami-06b21ccaeff8cd686
+      SecurityGroupIds:
+        - !ImportValue SshJumpboxSecurityGroupId
+
+Outputs:
+  JumpboxInstanceId:
+    Description: The instance ID of the jumpbox
+    Value: !Ref JumpboxInstance
