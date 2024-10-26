@@ -1,6 +1,15 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: AWS CloudFormation Template to create a jumpbox instance - IaC CA 1
 
+
+Mappings:
+  RegionImageMap:
+    us-east-1:
+      ImageId: ami-06b21ccaeff8cd686
+    eu-west-1:
+      ImageId: ami-00385a401487aefa4
+
+
 Resources:
   JumpboxInstance:
     Type: "AWS::EC2::Instance"
@@ -8,7 +17,7 @@ Resources:
       InstanceType: t2.micro
       KeyName: KeyPairJumpbox
       SubnetId: !ImportValue PublicSubnetId
-      ImageId: ami-06b21ccaeff8cd686
+      ImageId:  !FindInMap [RegionImageMap, !Ref "AWS::Region", !Ref ImageId]
       SecurityGroupIds:
         - !ImportValue SshJumpboxSecurityGroupId
 
